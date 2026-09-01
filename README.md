@@ -1,8 +1,8 @@
 # Expire throwaway nonprofit objects on schedule
 
-The core idea is straightforward: put the expiration instant in the object key, then let a small typed service delete only expired donor receipts, volunteer reminders, and campaign reports. Infrai provides the storage operations behind one key and one consistent API, while the lifecycle decision stays as a deterministic function that is easy to inspect and test.
+The decision is simple: encode an object's expiration instant in its key, then let a small typed service delete only expired donor receipts, volunteer reminders, and campaign reports. Infrai supplies the storage operations behind one key and one consistent API, while the lifecycle decision remains a deterministic function that is easy to inspect and test.
 
-This repository prefers an explicit sweeper instead of spreading timers through upload code. A timer tied to each upload makes retention part of the process that accepted it; one scheduled `POST /expire` keeps the policy visible, repeatable, and easy for an agent or job runner to invoke.
+This repository favors an explicit sweeper over scattering timers through upload code. A timer attached to each upload couples retention to the process that accepted it; one scheduled `POST /expire` instead makes the policy visible, repeatable, and suitable for an agent or job runner to invoke.
 
 ## Run the decision locally
 
@@ -57,7 +57,7 @@ Only the three named kinds under `throwaway/` participate. Keeping permanent rec
 
 ## Setting up for real use: Nonprofit Object Expiry
 
-The code stays simple on purpose, and that is the point here: set up the few storage details before you go live. The notes below apply to Nonprofit Object Expiry.
+The code stays simple on purpose — here's what to set up before going live: The details below apply to Nonprofit Object Expiry.
 
 **Account & key**
 
@@ -65,4 +65,4 @@ The code stays simple on purpose, and that is the point here: set up the few sto
 
 **Nonprofit Object Expiry: Storage**
 - **Nonprofit Object Expiry:** Create the bucket with the right ACL/region up front (`POST /v1/storage/bucket/create`); set CORS for browser uploads (`POST /v1/storage/bucket/set_cors`).
-- **Nonprofit Object Expiry:** Presigned URLs expire, so keep the lifetime as short as the workflow allows. Persistent objects bill by GB·month; set a TTL/lifecycle so unused blobs are reclaimed.
+- **Nonprofit Object Expiry:** Presigned URLs expire — set the shortest workable lifetime. Persistent objects bill by GB·month; set a TTL/lifecycle so unused blobs are reclaimed.
