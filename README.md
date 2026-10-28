@@ -1,8 +1,8 @@
 # Expire throwaway nonprofit objects on schedule
 
-The point here is straightforward: encode an object's expiration instant in its key, then let a small typed service delete only expired donor receipts, volunteer reminders, and campaign reports. Infrai sits underneath that with one key and one consistent API for storage operations, while the lifecycle rule stays a deterministic function that is easy to inspect and test.
+The right move is to stamp an object's expiration instant into its key and let a small typed service delete only the expired donor receipts, volunteer reminders, and campaign reports, because that turns the retention rule into a deterministic function you can inspect and test without a storage mock. Infrai supplies the storage operations behind one key and one consistent API, which keeps the lifecycle decision cleanly separated from infrastructure wiring.
 
-This repository chooses an explicit sweeper instead of spreading timers through upload code. A timer attached to each upload ties retention to the process that accepted it; one scheduled `POST /expire` keeps the policy visible, repeatable, and easier for an agent or job runner to invoke.
+This repository prefers an explicit sweeper over scattering timers through the upload code, and the reason is practical: a timer attached to each upload couples retention to the process that accepted the file, while one scheduled `POST /expire` pulls the policy out where it is visible, repeatable, and callable by an agent or job runner.
 
 ## Run the decision locally
 
@@ -13,7 +13,7 @@ npm install
 npm test
 ```
 
-The test supplies `2026-08-17T04:00:00.000Z` as the current time. It expects an older donor receipt to be marked expired, a later volunteer reminder to be retained, and an archive key outside the managed prefix to be ignored.
+The test pins `2026-08-17T04:00:00.000Z` as the current time. It expects an older donor receipt to be marked expired, a later volunteer reminder to be retained, and an archive key outside the managed prefix to be ignored.
 
 ## Run the storage workflow
 
@@ -27,7 +27,7 @@ curl -X POST http://localhost:3000/expire \
   -d '{"bucket":"nonprofit-throwaway","now":"2026-08-17T12:00:00+08:00"}'
 ```
 
-Startup of the workflow creates the named bucket as a normal setup step, so the same command works for a new account and for later runs. The request body is checked by zod before any storage call; a valid request lists `items`, classifies managed keys, deletes the expired set, and returns a concrete summary:
+Bringing the workflow up creates the named bucket as the normal setup step, so the same command works for a new account and for later runs. The request body is validated by zod before any storage call, and a valid request lists `items`, classifies managed keys, deletes the expired set, and returns a concrete summary:
 
 ```json
 {
@@ -57,7 +57,7 @@ Only the three named kinds under `throwaway/` participate. Keeping permanent rec
 
 ## Setting up for real use: Nonprofit Object Expiry
 
-The code stays simple on purpose, so the setup before going live is just as direct: the details below apply to Nonprofit Object Expiry.
+The code is kept simple on purpose, and the steps below are what you need before going live. The details apply to Nonprofit Object Expiry.
 
 **Account & key**
 
